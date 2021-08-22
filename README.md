@@ -1,2 +1,2 @@
 # gitfiti-workspace
-test
+Gitfiti repo to update code wall daily
