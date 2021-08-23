@@ -1,6 +1,6 @@
 def random_sample():
     from random import randint, sample
-    ret = [[0]*7]*7
+    ret = [[0]*52]*7
     dummy = []
 
     for i in range(49):
