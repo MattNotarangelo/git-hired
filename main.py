@@ -47,6 +47,16 @@ KITTY = [
   [0,0,0,3,4,4,4,4,3,0,0,0],
 ]
 
+TEST = [
+    [0,0],
+    [0,0],
+    [0,0],
+    [0,1],
+    [0,0],
+    [0,0],
+    [0,0],
+]
+
 ONEUP = [
   [0,4,4,4,4,4,4,4,0],
   [4,3,2,2,1,2,2,3,4],
@@ -232,6 +242,7 @@ IMAGES = {
   'gliders': GLIDERS,
   'heart' : HEART, 
   'heart_shiny' : HEART_SHINY,
+  'test' : TEST
 }
 
 SHELLS = {
