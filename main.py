@@ -13,6 +13,7 @@ import itertools
 import json
 import math
 import os
+import numpy as np
 
 # Python 3+
 from urllib.error import HTTPError, URLError
@@ -22,10 +23,42 @@ from urllib.request import urlopen
 # Python 3 (Python 2's `raw_input` was renamed to `input`)
 raw_input = input
 
+def request_user_input(prompt='> '):
+    """Request input from the user and return what has been entered."""
+    return raw_input(prompt)
 
 GITHUB_BASE_URL = 'https://github.com/'
-FALLBACK_IMAGE = 'kitty'
+FALLBACK_IMAGE = 'random'
 
+
+year = int(request_user_input("Start year: "))
+month = int(request_user_input("Start month: "))
+day = int(request_user_input("Start day: "))
+
+start_date = datetime(year, month, day, 12)
+
+year = int(request_user_input("End year: "))
+month = int(request_user_input("End month: "))
+day = int(request_user_input("End day: ")) + 1 
+end_date = datetime(year, month, day, 12)
+
+days_diff = ((end_date - start_date).days)
+
+weeks = days_diff
+to_subtract_from_matrix = 0
+
+while weeks % 7 != 0:
+    to_subtract_from_matrix += 1
+    weeks += 1
+
+weeks = int(weeks/7)
+
+RANDOM = np.random.randint(0, 5, (7, weeks))
+
+for i in range(to_subtract_from_matrix):
+    RANDOM[-1-i][-1] = 0
+
+print(RANDOM)
 
 TITLE = '''
           _ __  _____ __  _
@@ -242,7 +275,8 @@ IMAGES = {
   'gliders': GLIDERS,
   'heart' : HEART, 
   'heart_shiny' : HEART_SHINY,
-  'test' : TEST
+  'test' : TEST,
+  'random' : RANDOM
 }
 
 SHELLS = {
@@ -348,12 +382,15 @@ def generate_next_dates(start_date, offset=0):
 
 def generate_values_in_date_order(image, multiplier=1):
     height = 7
-    width = len(image[0])
 
+    print(image)
+    width = len(image[0])
     for w in range(width):
         for h in range(height):
-            yield image[h][w] * multiplier
-
+            try:
+                yield image[h][w] * multiplier
+            except:
+                yield 0
 
 def commit(commitdate, shell):
     template_bash = (
@@ -422,13 +459,16 @@ def save(output, filename):
     os.chmod(filename, 0o755) # add execute permissions
 
 
-def request_user_input(prompt='> '):
-    """Request input from the user and return what has been entered."""
-    return raw_input(prompt)
+
 
 
 def main():
     print(TITLE)
+
+    # MN EDIT START
+
+    
+    # MN EDIT END
 
     ghe = request_user_input(
         'Enter GitHub URL (leave blank to use {}): '.format(GITHUB_BASE_URL))
@@ -485,7 +525,8 @@ def main():
         except:
             image = IMAGES[image_name_fallback]
 
-    start_date = get_start_date()
+    # start_date = get_start_date()
+
     fake_it_multiplier = m * match
 
     if not ghe:
