@@ -1,12 +1,9 @@
 #!/usr/bin/env python
 #
 # Copyright (c) 2013 Eric Romano (@gelstudios)
+# Modified 2021 by Matthew Notarangelo (@MattNotarangelo)
 # released under The MIT license (MIT) http://opensource.org/licenses/MIT
 #
-"""
-gitfiti
-noun : Carefully crafted graffiti in a GitHub commit history calendar
-"""
 
 from datetime import datetime, timedelta
 import itertools
