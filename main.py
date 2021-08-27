@@ -25,22 +25,9 @@ def request_user_input(prompt='> '):
     return input(prompt)
 
 GITHUB_BASE_URL = 'https://github.com/'
-FALLBACK_IMAGE = 'random'
 
 
-year = int(request_user_input("Start year: "))
-month = int(request_user_input("Start month: "))
-day = int(request_user_input("Start day: "))
-
-start_date = datetime(year, month, day, 12)
-
-year = int(request_user_input("End year: "))
-month = int(request_user_input("End month: "))
-day = int(request_user_input("End day: ")) + 1 
-end_date = datetime(year, month, day, 12)
-
-
-def generate_random_matrix(start, end):
+def generate_random_matrix(start_date, end_date):
     days_diff = ((end_date - start_date).days)
 
     weeks = days_diff
@@ -118,16 +105,16 @@ def calculate_multiplier(max_commits):
 def get_start_date():
     """returns a datetime object for the first sunday after one year ago today
     at 12:00 noon"""
-    today = datetime.today()
-    date = datetime(today.year - 1, today.month, today.day, 12)
-    weekday = datetime.weekday(date)
+    year = int(request_user_input("Start year: "))
+    month = int(request_user_input("Start month: "))
+    day = int(request_user_input("Start day: "))
+    return datetime(year, month, day, 12)
 
-    while weekday < 6:
-        date = date + timedelta(1)
-        weekday = datetime.weekday(date)
-
-    return date
-
+def get_end_date():
+    year = int(request_user_input("End year: "))
+    month = int(request_user_input("End month: "))
+    day = int(request_user_input("End day: ")) + 1 
+    return datetime(year, month, day, 12)
 
 def generate_next_dates(start_date, offset=0):
     """generator that returns the next date, requires a datetime object as
@@ -256,7 +243,10 @@ def main():
 
     match = m if (match == 'gitfiti') else 1
 
-    image = generate_random_matrix()
+    start_date = get_start_date()
+    end_date = get_end_date()
+
+    image = generate_random_matrix(start_date, end_date)
 
     # start_date = get_start_date()
 
