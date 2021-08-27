@@ -22,7 +22,7 @@ raw_input = input
 
 def request_user_input(prompt='> '):
     """Request input from the user and return what has been entered."""
-    return raw_input(prompt)
+    return input(prompt)
 
 GITHUB_BASE_URL = 'https://github.com/'
 FALLBACK_IMAGE = 'random'
@@ -39,23 +39,26 @@ month = int(request_user_input("End month: "))
 day = int(request_user_input("End day: ")) + 1 
 end_date = datetime(year, month, day, 12)
 
-days_diff = ((end_date - start_date).days)
 
-weeks = days_diff
-to_subtract_from_matrix = 0
+def generate_random_matrix(start, end):
+    days_diff = ((end_date - start_date).days)
 
-while weeks % 7 != 0:
-    to_subtract_from_matrix += 1
-    weeks += 1
+    weeks = days_diff
+    to_subtract_from_matrix = 0
 
-weeks = int(weeks/7)
+    while weeks % 7 != 0:
+        to_subtract_from_matrix += 1
+        weeks += 1
 
-RANDOM = np.random.randint(0, 5, (7, weeks))
+    weeks = int(weeks/7)
 
-for i in range(to_subtract_from_matrix):
-    RANDOM[-1-i][-1] = 0
+    random = np.random.randint(0, 5, (7, weeks))
 
-print(RANDOM)
+    for i in range(to_subtract_from_matrix):
+        random[-1-i][-1] = 0
+
+    return random
+
 
 TITLE = '''
           _ __  _____ __  _
@@ -67,250 +70,10 @@ TITLE = '''
 '''
 
 
-KITTY = [
-  [0,0,0,4,0,0,0,0,4,0,0,0],
-  [0,0,4,2,4,4,4,4,2,4,0,0],
-  [0,0,4,2,2,2,2,2,2,4,0,0],
-  [2,2,4,2,4,2,2,4,2,4,2,2],
-  [0,0,4,2,2,3,3,2,2,4,0,0],
-  [2,2,4,2,2,2,2,2,2,4,2,2],
-  [0,0,0,3,4,4,4,4,3,0,0,0],
-]
-
-TEST = [
-    [0,0],
-    [0,0],
-    [0,0],
-    [0,1],
-    [0,0],
-    [0,0],
-    [0,0],
-]
-
-ONEUP = [
-  [0,4,4,4,4,4,4,4,0],
-  [4,3,2,2,1,2,2,3,4],
-  [4,2,2,1,1,1,2,2,4],
-  [4,3,4,4,4,4,4,3,4],
-  [4,4,1,4,1,4,1,4,4],
-  [0,4,1,1,1,1,1,4,0],
-  [0,0,4,4,4,4,4,0,0],
-]
-
-ONEUP2 = [
-  [0,0,4,4,4,4,4,4,4,0,0],
-  [0,4,2,2,1,1,1,2,2,4,0],
-  [4,3,2,2,1,1,1,2,2,3,4],
-  [4,3,3,4,4,4,4,4,3,3,4],
-  [0,4,4,1,4,1,4,1,4,4,0],
-  [0,0,4,1,1,1,1,1,4,0,0],
-  [0,0,0,4,4,4,4,4,0,0,0],
-]
-
-HACKERSCHOOL = [
-  [4,4,4,4,4,4],
-  [4,3,3,3,3,4],
-  [4,1,3,3,1,4],
-  [4,3,3,3,3,4],
-  [4,4,4,4,4,4],
-  [0,0,4,4,0,0],
-  [4,4,4,4,4,4],
-]
-
-OCTOCAT = [
-  [0,0,0,4,0,0,0,4,0],
-  [0,0,4,4,4,4,4,4,4],
-  [0,0,4,1,3,3,3,1,4],
-  [4,0,3,4,3,3,3,4,3],
-  [0,4,0,0,4,4,4,0,0],
-  [0,0,4,4,4,4,4,4,4],
-  [0,0,4,0,4,0,4,0,4],
-]
-
-OCTOCAT2 = [
-  [0,0,4,0,0,4,0],
-  [0,4,4,4,4,4,4],
-  [0,4,1,3,3,1,4],
-  [0,4,4,4,4,4,4],
-  [4,0,0,4,4,0,0],
-  [0,4,4,4,4,4,0],
-  [0,0,0,4,4,4,0],
-]
-
-HELLO = [
-  [0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,4],
-  [0,2,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,4],
-  [0,3,3,3,0,2,3,3,0,3,0,3,0,1,3,1,0,3],
-  [0,4,0,4,0,4,0,4,0,4,0,4,0,4,0,4,0,3],
-  [0,3,0,3,0,3,3,3,0,3,0,3,0,3,0,3,0,2],
-  [0,2,0,2,0,2,0,0,0,2,0,2,0,2,0,2,0,0],
-  [0,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,4],
-]
-
-HEART1 = [
-  [0,1,1,0,1,1,0],
-  [1,3,3,1,3,3,1],
-  [1,3,4,3,4,3,1],
-  [1,3,4,4,4,3,1],
-  [0,1,3,4,3,1,0],
-  [0,0,1,3,1,0,0],
-  [0,0,0,1,0,0,0],        
-]
-
-HEART2 = [
-  [0,5,5,0,5,5,0],
-  [5,3,3,5,3,3,5],
-  [5,3,1,3,1,3,5],
-  [5,3,1,1,1,3,5],
-  [0,5,3,1,3,5,0],
-  [0,0,5,3,5,0,0],
-  [0,0,0,5,0,0,0],        
-]
-
-HIREME = [
-  [1,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [3,3,3,0,2,0,3,3,3,0,2,3,3,0,0,3,3,0,3,0,0,2,3,3],
-  [4,0,4,0,4,0,4,0,0,0,4,0,4,0,0,4,0,4,0,4,0,4,0,4],
-  [3,0,3,0,3,0,3,0,0,0,3,3,3,0,0,3,0,3,0,3,0,3,3,3],
-  [2,0,2,0,2,0,2,0,0,0,2,0,0,0,0,2,0,2,0,2,0,2,0,0],
-  [1,0,1,0,1,0,1,0,0,0,1,1,1,0,0,1,0,1,0,1,0,1,1,1],
-]
-
-BEER = [
-  [0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,3,3,0,0],
-  [0,0,1,1,1,1,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [0,2,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [2,0,2,2,2,2,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,3,3,0,0],
-  [2,0,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,3,0,0],
-  [0,2,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [0,0,2,2,2,2,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,0,0,3,0],
-]
-
-GLIDERS = [
-  [0,0,0,4,0,4,0,0,0,0,4,0,0,0],
-  [0,4,0,4,0,0,4,4,0,0,0,4,0,0],
-  [0,0,4,4,0,4,4,0,0,4,4,4,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,4,0,4,0,0,0,4,0,0,0,0,0,0],
-  [0,0,4,4,0,4,0,4,0,0,0,0,0,0],
-  [0,0,4,0,0,0,4,4,0,0,0,0,0,0],
-]
-
-HEART = [
-  [0,4,4,0,4,4,0],
-  [4,2,2,4,2,2,4],
-  [4,2,2,2,2,2,4],
-  [4,2,2,2,2,2,4],
-  [0,4,2,2,2,4,0],
-  [0,0,4,2,4,0,0],
-  [0,0,0,4,0,0,0],
-]
-
-HEART_SHINY = [
-  [0,4,4,0,4,4,0],
-  [4,2,0,4,2,2,4],
-  [4,0,2,2,2,2,4],
-  [4,2,2,2,2,2,4],
-  [0,4,2,2,2,4,0],
-  [0,0,4,2,4,0,0],
-  [0,0,0,4,0,0,0],
-]
-
-ASCII_TO_NUMBER = {
-  '_': 0,
-  '_': 1,
-  '~': 2,
-  '=': 3,
-  '*': 4,
-}
-
-
-def str_to_sprite(content):
-    # Break out lines and filter any excess
-    lines = content.split('\n')
-    def is_empty_line(line):
-        return len(line) != 0
-    lines = filter(is_empty_line, lines)
-
-    # Break up lines into each character
-    split_lines = [list(line) for line in lines]
-
-    # Replace each character with its numeric equivalent
-    for line in split_lines:
-        for index, char in enumerate(line):
-            line[index] = ASCII_TO_NUMBER.get(char, 0)
-
-    # Return the formatted str
-    return split_lines
-
-
-ONEUP_STR = str_to_sprite('''
- *******
-*=~~-~~=*
-*~~---~~*
-*=*****=*
-**-*-*-**
- *-----*
-  *****
-''')
-
-
-IMAGES = {
-  'kitty': KITTY,
-  'oneup': ONEUP,
-  'oneup2': ONEUP2,
-  'hackerschool': HACKERSCHOOL,
-  'octocat': OCTOCAT,
-  'octocat2': OCTOCAT2,
-  'hello': HELLO,
-  'heart1': HEART1,
-  'heart2': HEART2,
-  'hireme': HIREME,
-  'oneup_str': ONEUP_STR,
-  'beer': BEER,
-  'gliders': GLIDERS,
-  'heart' : HEART, 
-  'heart_shiny' : HEART_SHINY,
-  'test' : TEST,
-  'random' : RANDOM
-}
-
 SHELLS = {
   'bash': 'sh',
   'powershell': 'ps1',
 }
-
-def load_images(img_names):
-    """loads user images from given file(s)"""
-    if img_names[0] == '':
-        return {}
-
-    for image_name in img_names:
-        img = open(image_name)
-        loaded_imgs = {}
-        img_list = ''
-        img_line = ' '
-        name = img.readline().replace('\n', '')
-        name = name[1:]
-
-        while True:
-            img_line = img.readline()
-            if img_line == '':
-                break
-
-            img_line.replace('\n', '')
-            if img_line[0] == ':':
-                loaded_imgs[name] = json.loads(img_list)
-                name = img_line[1:]
-                img_list = ''
-            else:
-                img_list += img_line
-
-        loaded_imgs[name] = json.loads(img_list)
-
-        return loaded_imgs
-
 
 def retrieve_contributions_calendar(username, base_url):
     """retrieves the GitHub commit calendar data for a username"""
@@ -347,12 +110,9 @@ def calculate_multiplier(max_commits):
     """calculates a multiplier to scale GitHub colors to commit history"""
     m = max_commits / 4.0
 
-    if m == 0:
-        return 1
+    if not m: return 1
 
-    m = math.ceil(m)
-    m = int(m)
-    return m
+    return int(math.ceil(m))
 
 
 def get_start_date():
@@ -467,12 +227,9 @@ def main():
     
     # MN EDIT END
 
-    ghe = request_user_input(
-        'Enter GitHub URL (leave blank to use {}): '.format(GITHUB_BASE_URL))
-
     username = request_user_input('Enter your GitHub username: ')
 
-    git_base = ghe if ghe else GITHUB_BASE_URL
+    git_base = GITHUB_BASE_URL
 
     contributions_calendar = retrieve_contributions_calendar(username, git_base)
 
@@ -483,10 +240,7 @@ def main():
     repo = request_user_input(
         'Enter the name of the repository to use by gitfiti: ')
 
-    offset = request_user_input(
-        'Enter the number of weeks to offset the image (from the left): ')
-
-    offset = int(offset) if offset.strip() else 0
+    offset = 0
 
     print((
         'By default gitfiti.py matches the darkest pixel to the highest\n'
@@ -502,34 +256,13 @@ def main():
 
     match = m if (match == 'gitfiti') else 1
 
-    print('Enter file(s) to load images from (blank if not applicable)')
-    img_names = request_user_input().split(' ')
-
-    loaded_images = load_images(img_names)
-    images = dict(IMAGES, **loaded_images)
-
-    print('Enter the image name to gitfiti')
-    print('Images: ' + ', '.join(images.keys()))
-    image = request_user_input()
-
-    image_name_fallback = FALLBACK_IMAGE
-
-    if not image:
-        image = IMAGES[image_name_fallback]
-    else:
-        try:
-            image = images[image]
-        except:
-            image = IMAGES[image_name_fallback]
+    image = generate_random_matrix()
 
     # start_date = get_start_date()
 
     fake_it_multiplier = m * match
 
-    if not ghe:
-        git_url = 'git@github.com'
-    else:
-        git_url = request_user_input('Enter Git URL like git@site.github.com: ')
+    git_url = 'git@github.com'
         
     shell = ''
     while shell not in SHELLS.keys(): 
