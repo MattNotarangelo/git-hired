@@ -7,24 +7,17 @@
 
 from datetime import datetime, timedelta
 import itertools
-import json
 import math
 import os
 import numpy as np
 
-# Python 3+
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 
-# Python 3 (Python 2's `raw_input` was renamed to `input`)
-raw_input = input
-
 def request_user_input(prompt='> '):
     """Request input from the user and return what has been entered."""
     return input(prompt)
-
-GITHUB_BASE_URL = 'https://github.com/'
 
 
 def generate_random_matrix(start_date, end_date):
@@ -97,7 +90,8 @@ def calculate_multiplier(max_commits):
     """calculates a multiplier to scale GitHub colors to commit history"""
     m = max_commits / 4.0
 
-    if not m: return 1
+    if not m: 
+        return 1
 
     return int(math.ceil(m))
 
@@ -108,13 +102,15 @@ def get_start_date():
     year = int(request_user_input("Start year: "))
     month = int(request_user_input("Start month: "))
     day = int(request_user_input("Start day: "))
+
     return datetime(year, month, day, 12)
 
 def get_end_date():
     year = int(request_user_input("End year: "))
     month = int(request_user_input("End month: "))
-    day = int(request_user_input("End day: ")) + 1 
-    return datetime(year, month, day, 12)
+    day = int(request_user_input("End day: ")) 
+
+    return datetime(year, month, day+1, 12)
 
 def generate_next_dates(start_date, offset=0):
     """generator that returns the next date, requires a datetime object as
@@ -126,9 +122,8 @@ def generate_next_dates(start_date, offset=0):
 
 def generate_values_in_date_order(image, multiplier=1):
     height = 7
-
-    print(image)
     width = len(image[0])
+    
     for w in range(width):
         for h in range(height):
             try:
@@ -209,14 +204,9 @@ def save(output, filename):
 def main():
     print(TITLE)
 
-    # MN EDIT START
-
-    
-    # MN EDIT END
-
     username = request_user_input('Enter your GitHub username: ')
 
-    git_base = GITHUB_BASE_URL
+    git_base = 'https://github.com/'
 
     contributions_calendar = retrieve_contributions_calendar(username, git_base)
 
@@ -248,7 +238,6 @@ def main():
 
     image = generate_random_matrix(start_date, end_date)
 
-    # start_date = get_start_date()
 
     fake_it_multiplier = m * match
 
