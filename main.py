@@ -1,343 +1,56 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013 Eric Romano (@gelstudios)
+# Copyright (c) 2021 by Matthew Notarangelo (@MattNotarangelo)
+# Developed from Gitfiti - 2013 Eric Romano (@gelstudios)
 # released under The MIT license (MIT) http://opensource.org/licenses/MIT
-#
-"""
-gitfiti
-noun : Carefully crafted graffiti in a GitHub commit history calendar
-"""
 
 from datetime import datetime, timedelta
-import itertools
-import json
-import math
-import os
-import numpy as np
-
-# Python 3+
+from itertools import count
+from math import ceil
+from os import chmod
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
+import numpy as np
 
-# Python 3 (Python 2's `raw_input` was renamed to `input`)
-raw_input = input
 
-def request_user_input(prompt='> '):
+def request_user_input(prompt="> "):
     """Request input from the user and return what has been entered."""
-    return raw_input(prompt)
-
-GITHUB_BASE_URL = 'https://github.com/'
-FALLBACK_IMAGE = 'random'
+    return input(prompt)
 
 
-year = int(request_user_input("Start year: "))
-month = int(request_user_input("Start month: "))
-day = int(request_user_input("Start day: "))
+def generate_random_matrix(start_date, end_date):
+    """Takes start and end dates to return numpy matrix of randint [0,5]"""
+    weeks = (end_date - start_date).days  # gets days between two dates
+    to_subtract_from_matrix = 0
 
-start_date = datetime(year, month, day, 12)
+    while weeks % 7 != 0:  # round up to whole number of weeks
+        to_subtract_from_matrix += 1  # counts excess days to remove later
+        weeks += 1
 
-year = int(request_user_input("End year: "))
-month = int(request_user_input("End month: "))
-day = int(request_user_input("End day: ")) + 1 
-end_date = datetime(year, month, day, 12)
+    weeks = int(weeks / 7)  # convert to weeks
+    random = np.random.randint(0, 5, (7, weeks))  # create numpy matrix
 
-days_diff = ((end_date - start_date).days)
+    for i in range(to_subtract_from_matrix):
+        random[-1 - i][-1] = 0  # make additional days = 0
 
-weeks = days_diff
-to_subtract_from_matrix = 0
-
-while weeks % 7 != 0:
-    to_subtract_from_matrix += 1
-    weeks += 1
-
-weeks = int(weeks/7)
-
-RANDOM = np.random.randint(0, 5, (7, weeks))
-
-for i in range(to_subtract_from_matrix):
-    RANDOM[-1-i][-1] = 0
-
-print(RANDOM)
-
-TITLE = '''
-          _ __  _____ __  _
-   ____ _(_) /_/ __(_) /_(_)
-  / __ `/ / __/ /_/ / __/ /
- / /_/ / / /_/ __/ / /_/ /
- \__, /_/\__/_/ /_/\__/_/
-/____/
-'''
-
-
-KITTY = [
-  [0,0,0,4,0,0,0,0,4,0,0,0],
-  [0,0,4,2,4,4,4,4,2,4,0,0],
-  [0,0,4,2,2,2,2,2,2,4,0,0],
-  [2,2,4,2,4,2,2,4,2,4,2,2],
-  [0,0,4,2,2,3,3,2,2,4,0,0],
-  [2,2,4,2,2,2,2,2,2,4,2,2],
-  [0,0,0,3,4,4,4,4,3,0,0,0],
-]
-
-TEST = [
-    [0,0],
-    [0,0],
-    [0,0],
-    [0,1],
-    [0,0],
-    [0,0],
-    [0,0],
-]
-
-ONEUP = [
-  [0,4,4,4,4,4,4,4,0],
-  [4,3,2,2,1,2,2,3,4],
-  [4,2,2,1,1,1,2,2,4],
-  [4,3,4,4,4,4,4,3,4],
-  [4,4,1,4,1,4,1,4,4],
-  [0,4,1,1,1,1,1,4,0],
-  [0,0,4,4,4,4,4,0,0],
-]
-
-ONEUP2 = [
-  [0,0,4,4,4,4,4,4,4,0,0],
-  [0,4,2,2,1,1,1,2,2,4,0],
-  [4,3,2,2,1,1,1,2,2,3,4],
-  [4,3,3,4,4,4,4,4,3,3,4],
-  [0,4,4,1,4,1,4,1,4,4,0],
-  [0,0,4,1,1,1,1,1,4,0,0],
-  [0,0,0,4,4,4,4,4,0,0,0],
-]
-
-HACKERSCHOOL = [
-  [4,4,4,4,4,4],
-  [4,3,3,3,3,4],
-  [4,1,3,3,1,4],
-  [4,3,3,3,3,4],
-  [4,4,4,4,4,4],
-  [0,0,4,4,0,0],
-  [4,4,4,4,4,4],
-]
-
-OCTOCAT = [
-  [0,0,0,4,0,0,0,4,0],
-  [0,0,4,4,4,4,4,4,4],
-  [0,0,4,1,3,3,3,1,4],
-  [4,0,3,4,3,3,3,4,3],
-  [0,4,0,0,4,4,4,0,0],
-  [0,0,4,4,4,4,4,4,4],
-  [0,0,4,0,4,0,4,0,4],
-]
-
-OCTOCAT2 = [
-  [0,0,4,0,0,4,0],
-  [0,4,4,4,4,4,4],
-  [0,4,1,3,3,1,4],
-  [0,4,4,4,4,4,4],
-  [4,0,0,4,4,0,0],
-  [0,4,4,4,4,4,0],
-  [0,0,0,4,4,4,0],
-]
-
-HELLO = [
-  [0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,4],
-  [0,2,0,0,0,0,0,0,0,2,0,2,0,0,0,0,0,4],
-  [0,3,3,3,0,2,3,3,0,3,0,3,0,1,3,1,0,3],
-  [0,4,0,4,0,4,0,4,0,4,0,4,0,4,0,4,0,3],
-  [0,3,0,3,0,3,3,3,0,3,0,3,0,3,0,3,0,2],
-  [0,2,0,2,0,2,0,0,0,2,0,2,0,2,0,2,0,0],
-  [0,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,4],
-]
-
-HEART1 = [
-  [0,1,1,0,1,1,0],
-  [1,3,3,1,3,3,1],
-  [1,3,4,3,4,3,1],
-  [1,3,4,4,4,3,1],
-  [0,1,3,4,3,1,0],
-  [0,0,1,3,1,0,0],
-  [0,0,0,1,0,0,0],        
-]
-
-HEART2 = [
-  [0,5,5,0,5,5,0],
-  [5,3,3,5,3,3,5],
-  [5,3,1,3,1,3,5],
-  [5,3,1,1,1,3,5],
-  [0,5,3,1,3,5,0],
-  [0,0,5,3,5,0,0],
-  [0,0,0,5,0,0,0],        
-]
-
-HIREME = [
-  [1,0,0,0,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [2,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [3,3,3,0,2,0,3,3,3,0,2,3,3,0,0,3,3,0,3,0,0,2,3,3],
-  [4,0,4,0,4,0,4,0,0,0,4,0,4,0,0,4,0,4,0,4,0,4,0,4],
-  [3,0,3,0,3,0,3,0,0,0,3,3,3,0,0,3,0,3,0,3,0,3,3,3],
-  [2,0,2,0,2,0,2,0,0,0,2,0,0,0,0,2,0,2,0,2,0,2,0,0],
-  [1,0,1,0,1,0,1,0,0,0,1,1,1,0,0,1,0,1,0,1,0,1,1,1],
-]
-
-BEER = [
-  [0,0,0,0,0,0,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,3,3,0,0],
-  [0,0,1,1,1,1,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [0,2,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [2,0,2,2,2,2,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,3,3,0,0],
-  [2,0,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,3,0,0],
-  [0,2,2,2,2,2,0,3,0,0,3,0,3,0,0,0,3,0,0,0,3,0,0,3,0],
-  [0,0,2,2,2,2,0,3,3,3,0,0,3,3,3,0,3,3,3,0,3,0,0,3,0],
-]
-
-GLIDERS = [
-  [0,0,0,4,0,4,0,0,0,0,4,0,0,0],
-  [0,4,0,4,0,0,4,4,0,0,0,4,0,0],
-  [0,0,4,4,0,4,4,0,0,4,4,4,0,0],
-  [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-  [0,4,0,4,0,0,0,4,0,0,0,0,0,0],
-  [0,0,4,4,0,4,0,4,0,0,0,0,0,0],
-  [0,0,4,0,0,0,4,4,0,0,0,0,0,0],
-]
-
-HEART = [
-  [0,4,4,0,4,4,0],
-  [4,2,2,4,2,2,4],
-  [4,2,2,2,2,2,4],
-  [4,2,2,2,2,2,4],
-  [0,4,2,2,2,4,0],
-  [0,0,4,2,4,0,0],
-  [0,0,0,4,0,0,0],
-]
-
-HEART_SHINY = [
-  [0,4,4,0,4,4,0],
-  [4,2,0,4,2,2,4],
-  [4,0,2,2,2,2,4],
-  [4,2,2,2,2,2,4],
-  [0,4,2,2,2,4,0],
-  [0,0,4,2,4,0,0],
-  [0,0,0,4,0,0,0],
-]
-
-ASCII_TO_NUMBER = {
-  '_': 0,
-  '_': 1,
-  '~': 2,
-  '=': 3,
-  '*': 4,
-}
-
-
-def str_to_sprite(content):
-    # Break out lines and filter any excess
-    lines = content.split('\n')
-    def is_empty_line(line):
-        return len(line) != 0
-    lines = filter(is_empty_line, lines)
-
-    # Break up lines into each character
-    split_lines = [list(line) for line in lines]
-
-    # Replace each character with its numeric equivalent
-    for line in split_lines:
-        for index, char in enumerate(line):
-            line[index] = ASCII_TO_NUMBER.get(char, 0)
-
-    # Return the formatted str
-    return split_lines
-
-
-ONEUP_STR = str_to_sprite('''
- *******
-*=~~-~~=*
-*~~---~~*
-*=*****=*
-**-*-*-**
- *-----*
-  *****
-''')
-
-
-IMAGES = {
-  'kitty': KITTY,
-  'oneup': ONEUP,
-  'oneup2': ONEUP2,
-  'hackerschool': HACKERSCHOOL,
-  'octocat': OCTOCAT,
-  'octocat2': OCTOCAT2,
-  'hello': HELLO,
-  'heart1': HEART1,
-  'heart2': HEART2,
-  'hireme': HIREME,
-  'oneup_str': ONEUP_STR,
-  'beer': BEER,
-  'gliders': GLIDERS,
-  'heart' : HEART, 
-  'heart_shiny' : HEART_SHINY,
-  'test' : TEST,
-  'random' : RANDOM
-}
-
-SHELLS = {
-  'bash': 'sh',
-  'powershell': 'ps1',
-}
-
-def load_images(img_names):
-    """loads user images from given file(s)"""
-    if img_names[0] == '':
-        return {}
-
-    for image_name in img_names:
-        img = open(image_name)
-        loaded_imgs = {}
-        img_list = ''
-        img_line = ' '
-        name = img.readline().replace('\n', '')
-        name = name[1:]
-
-        while True:
-            img_line = img.readline()
-            if img_line == '':
-                break
-
-            img_line.replace('\n', '')
-            if img_line[0] == ':':
-                loaded_imgs[name] = json.loads(img_list)
-                name = img_line[1:]
-                img_list = ''
-            else:
-                img_list += img_line
-
-        loaded_imgs[name] = json.loads(img_list)
-
-        return loaded_imgs
+    return random
 
 
 def retrieve_contributions_calendar(username, base_url):
     """retrieves the GitHub commit calendar data for a username"""
-    base_url = base_url + 'users/' + username
+
+    base_url = base_url + "users/" + username
 
     try:
-        url = base_url + '/contributions'
+        url = base_url + "/contributions"
         page = urlopen(url)
     except (HTTPError, URLError) as e:
-        print('There was a problem fetching data from {0}'.format(url))
+        print(f"There was a problem fetching data from {base_url}")
         print(e)
         raise SystemExit
 
-    return page.read().decode('utf-8')
-
-
-def parse_contributions_calendar(contributions_calendar):
-    """Yield daily counts extracted from the contributions SVG."""
-    for line in contributions_calendar.splitlines():
-        for day in line.split():
-            if 'data-count=' in day:
-                commit = day.split('=')[1]
-                commit = commit.strip('"')
-                yield int(commit)
+    return page.read().decode("utf-8")
 
 
 def find_max_daily_commits(contributions_calendar):
@@ -346,45 +59,58 @@ def find_max_daily_commits(contributions_calendar):
     return max(daily_counts)
 
 
+def parse_contributions_calendar(contributions_calendar):
+    """Yield daily counts extracted from the contributions SVG."""
+    for line in contributions_calendar.splitlines():
+        for day in line.split():
+            if "data-count=" in day:
+                commit = day.split("=")[1]
+                commit = commit.strip('"')
+                yield int(commit)
+
+
 def calculate_multiplier(max_commits):
     """calculates a multiplier to scale GitHub colors to commit history"""
     m = max_commits / 4.0
 
-    if m == 0:
+    if not m:
         return 1
 
-    m = math.ceil(m)
-    m = int(m)
-    return m
+    return ceil(m)
 
 
 def get_start_date():
-    """returns a datetime object for the first sunday after one year ago today
-    at 12:00 noon"""
-    today = datetime.today()
-    date = datetime(today.year - 1, today.month, today.day, 12)
-    weekday = datetime.weekday(date)
+    """returns start datetime object from user input"""
+    year = int(request_user_input("Start year: "))
+    month = int(request_user_input("Start month: "))
+    day = int(request_user_input("Start day: "))
 
-    while weekday < 6:
-        date = date + timedelta(1)
-        weekday = datetime.weekday(date)
-
-    return date
+    return datetime(year, month, day, 12)
 
 
-def generate_next_dates(start_date, offset=0):
+def get_end_date():
+    """returns end datetime object from user input"""
+    year = int(request_user_input("End year: "))
+    month = int(request_user_input("End month: "))
+    day = int(request_user_input("End day: "))
+
+    return datetime(year, month, day + 1, 12)
+
+
+def generate_next_dates(start_date):
     """generator that returns the next date, requires a datetime object as
     input. The offset is in weeks"""
-    start = offset * 7
-    for i in itertools.count(start):
+    start = 0
+    for i in count(start):
         yield start_date + timedelta(i)
 
 
 def generate_values_in_date_order(image, multiplier=1):
+    """generator iterates through random matrix in order and returns number
+    of commits required"""
     height = 7
-
-    print(image)
     width = len(image[0])
+
     for w in range(width):
         for h in range(height):
             try:
@@ -392,161 +118,97 @@ def generate_values_in_date_order(image, multiplier=1):
             except:
                 yield 0
 
-def commit(commitdate, shell):
-    template_bash = (
-        '''GIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={1} '''
-        '''git commit --allow-empty -m "gitfiti" > /dev/null\n'''
-    )
-    
-    template_powershell = (
-        '''$Env:GIT_AUTHOR_DATE="{0}"\n$Env:GIT_COMMITTER_DATE="{1}"\n'''
-        '''git commit --allow-empty -m "gitfiti" | Out-Null\n'''
-    )
 
-    template = template_bash if shell == 'bash' else template_powershell
+def commit(commitdate):
+    """returns commit commands"""
+    template = (
+        """GIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={1} """
+        """git commit --allow-empty -m "git-hired" > /dev/null\n"""
+    )
 
     return template.format(commitdate.isoformat(), commitdate.isoformat())
 
 
-def fake_it(image, start_date, username, repo, git_url, shell, offset=0, multiplier=1):
-    template_bash = (
-        '#!/usr/bin/env bash\n'
-        'REPO={0}\n'
-        'git init $REPO\n'
-        'cd $REPO\n'
-        'touch README.md\n'
-        'git add README.md\n'
-        'touch gitfiti\n'
-        'git add gitfiti\n'
-        '{1}\n'
-        'git branch -M main\n'
-        'git remote add origin {2}:{3}/$REPO.git\n'
-        'git pull origin main\n'
-        'git push -u origin main\n'
+def fake_it(image, start_date, username, repo, git_url, multiplier=1):
+    """return completed shell script"""
+    template = (
+        "#!/usr/bin/env bash\n"
+        "REPO={0}\n"
+        "git init $REPO\n"
+        "cd $REPO\n"
+        "touch README.md\n"
+        "git add README.md\n"
+        "touch git-hired\n"
+        "git add git-hired\n"
+        "{1}\n"
+        "git branch -M main\n"
+        "git remote add origin {2}:{3}/$REPO.git\n"
+        "git pull origin main\n"
+        "git push -u origin main\n"
     )
-
-    template_powershell = (
-        'cd $PSScriptRoot\n'
-        '$REPO="{0}"\n'
-        'git init $REPO\n'
-        'cd $REPO\n'
-        'New-Item README.md -ItemType file | Out-Null\n'
-        'git add README.md\n'
-        'New-Item gitfiti -ItemType file | Out-Null\n'
-        'git add gitfiti\n'
-        '{1}\n'
-        'git branch -M main\n'
-        'git remote add origin {2}:{3}/$REPO.git\n'
-        'git pull origin main\n'
-        'git push -u origin main\n'
-    )
-
-    template = template_bash if shell == 'bash' else template_powershell
 
     strings = []
-    for value, date in zip(generate_values_in_date_order(image, multiplier),
-            generate_next_dates(start_date, offset)):
+    for value, date in zip(
+        generate_values_in_date_order(image, multiplier),
+        generate_next_dates(start_date),
+    ):
         for _ in range(value):
-            strings.append(commit(date, shell))
+            strings.append(commit(date))
 
-    return template.format(repo, ''.join(strings), git_url, username)
+    return template.format(repo, "".join(strings), git_url, username)
 
 
 def save(output, filename):
     """Saves the list to a given filename"""
-    with open(filename, 'w') as f:
+    with open(filename, "w") as f:
         f.write(output)
-    os.chmod(filename, 0o755) # add execute permissions
-
-
-
+    chmod(filename, 0o755)  # add execute permissions
 
 
 def main():
-    print(TITLE)
 
-    # MN EDIT START
+    username = request_user_input("Enter your GitHub username: ")
 
-    
-    # MN EDIT END
-
-    ghe = request_user_input(
-        'Enter GitHub URL (leave blank to use {}): '.format(GITHUB_BASE_URL))
-
-    username = request_user_input('Enter your GitHub username: ')
-
-    git_base = ghe if ghe else GITHUB_BASE_URL
+    git_base = "https://github.com/"
 
     contributions_calendar = retrieve_contributions_calendar(username, git_base)
-
     max_daily_commits = find_max_daily_commits(contributions_calendar)
-
     m = calculate_multiplier(max_daily_commits)
 
-    repo = request_user_input(
-        'Enter the name of the repository to use by gitfiti: ')
+    repo = request_user_input("Enter the name of the repository to use by git-hired: ")
 
-    offset = request_user_input(
-        'Enter the number of weeks to offset the image (from the left): ')
-
-    offset = int(offset) if offset.strip() else 0
-
-    print((
-        'By default gitfiti.py matches the darkest pixel to the highest\n'
-        'number of commits found in your GitHub commit/activity calendar,\n'
-        '\n'
-        'Currently this is: {0} commits\n'
-        '\n'
-        'Enter the word "gitfiti" to exceed your max\n'
-        '(this option generates WAY more commits)\n'
-        'Any other input will cause the default matching behavior'
-    ).format(max_daily_commits))
+    print(
+        (
+            "By default git-hired.py matches the darkest pixel to the highest\n"
+            "number of commits found in your GitHub commit/activity calendar,\n"
+            "\n"
+            "Currently this is: {0} commits\n"
+            "\n"
+            'Enter the word "git-hired" to exceed your max\n'
+            "(this option generates WAY more commits)\n"
+            "Any other input will cause the default matching behavior"
+        ).format(max_daily_commits)
+    )
     match = request_user_input()
 
-    match = m if (match == 'gitfiti') else 1
+    match = m if (match == "git-hired") else 1
 
-    print('Enter file(s) to load images from (blank if not applicable)')
-    img_names = request_user_input().split(' ')
+    start_date = get_start_date()
+    end_date = get_end_date()
 
-    loaded_images = load_images(img_names)
-    images = dict(IMAGES, **loaded_images)
-
-    print('Enter the image name to gitfiti')
-    print('Images: ' + ', '.join(images.keys()))
-    image = request_user_input()
-
-    image_name_fallback = FALLBACK_IMAGE
-
-    if not image:
-        image = IMAGES[image_name_fallback]
-    else:
-        try:
-            image = images[image]
-        except:
-            image = IMAGES[image_name_fallback]
-
-    # start_date = get_start_date()
+    image = generate_random_matrix(start_date, end_date)
 
     fake_it_multiplier = m * match
 
-    if not ghe:
-        git_url = 'git@github.com'
-    else:
-        git_url = request_user_input('Enter Git URL like git@site.github.com: ')
-        
-    shell = ''
-    while shell not in SHELLS.keys(): 
-        shell = request_user_input(
-            'Enter the target shell ({}): '.format(' or '.join(SHELLS.keys())))
+    git_url = "git@github.com"
 
-    output = fake_it(image, start_date, username, repo, git_url, shell, offset,
-                     fake_it_multiplier)
+    output = fake_it(image, start_date, username, repo, git_url, fake_it_multiplier)
 
-    output_filename = 'gitfiti.{}'.format(SHELLS[shell])
+    output_filename = "git-hired.sh"
     save(output, output_filename)
-    print('{} saved.'.format(output_filename))
-    print('Create a new(!) repo named {0} at {1} and run the script'.format(repo, git_base))
+    print(f"{output_filename} saved.")
+    print(f"Create a new(!) repo named {repo} at {git_base} and run the script")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
