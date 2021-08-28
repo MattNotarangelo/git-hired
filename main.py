@@ -4,10 +4,10 @@
 # Developed from Gitfiti - 2013 Eric Romano (@gelstudios)
 # released under The MIT license (MIT) http://opensource.org/licenses/MIT
 
-import itertools
-import math
-import os
 from datetime import datetime, timedelta
+from itertools import count
+from math import ceil
+from os import chmod
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -21,21 +21,18 @@ def request_user_input(prompt="> "):
 
 def generate_random_matrix(start_date, end_date):
     """Takes start and end dates to return numpy matrix of randint [0,5]"""
-    days_diff = (end_date - start_date).days
-
-    weeks = days_diff
+    weeks = (end_date - start_date).days  # gets days between two dates
     to_subtract_from_matrix = 0
 
-    while weeks % 7 != 0:
-        to_subtract_from_matrix += 1
+    while weeks % 7 != 0:  # round up to whole number of weeks
+        to_subtract_from_matrix += 1  # counts excess days to remove later
         weeks += 1
 
-    weeks = int(weeks / 7)
-
-    random = np.random.randint(0, 5, (7, weeks))
+    weeks = int(weeks / 7)  # convert to weeks
+    random = np.random.randint(0, 5, (7, weeks))  # create numpy matrix
 
     for i in range(to_subtract_from_matrix):
-        random[-1 - i][-1] = 0
+        random[-1 - i][-1] = 0  # make additional days = 0
 
     return random
 
@@ -49,7 +46,7 @@ def retrieve_contributions_calendar(username, base_url):
         url = base_url + "/contributions"
         page = urlopen(url)
     except (HTTPError, URLError) as e:
-        print("There was a problem fetching data from {0}".format(base_url))
+        print(f"There was a problem fetching data from {base_url}")
         print(e)
         raise SystemExit
 
@@ -79,7 +76,7 @@ def calculate_multiplier(max_commits):
     if not m:
         return 1
 
-    return math.ceil(m)
+    return ceil(m)
 
 
 def get_start_date():
@@ -104,11 +101,13 @@ def generate_next_dates(start_date):
     """generator that returns the next date, requires a datetime object as
     input. The offset is in weeks"""
     start = 0
-    for i in itertools.count(start):
+    for i in count(start):
         yield start_date + timedelta(i)
 
 
 def generate_values_in_date_order(image, multiplier=1):
+    """generator iterates through random matrix in order and returns number
+    of commits required"""
     height = 7
     width = len(image[0])
 
@@ -121,16 +120,17 @@ def generate_values_in_date_order(image, multiplier=1):
 
 
 def commit(commitdate):
-
+    """returns commit commands"""
     template = (
         """GIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={1} """
-        """git commit --allow-empty -m "gitfiti" > /dev/null\n"""
+        """git commit --allow-empty -m "git-hired" > /dev/null\n"""
     )
 
     return template.format(commitdate.isoformat(), commitdate.isoformat())
 
 
 def fake_it(image, start_date, username, repo, git_url, multiplier=1):
+    """return completed shell script"""
     template = (
         "#!/usr/bin/env bash\n"
         "REPO={0}\n"
@@ -138,8 +138,8 @@ def fake_it(image, start_date, username, repo, git_url, multiplier=1):
         "cd $REPO\n"
         "touch README.md\n"
         "git add README.md\n"
-        "touch gitfiti\n"
-        "git add gitfiti\n"
+        "touch git-hired\n"
+        "git add git-hired\n"
         "{1}\n"
         "git branch -M main\n"
         "git remote add origin {2}:{3}/$REPO.git\n"
@@ -162,7 +162,7 @@ def save(output, filename):
     """Saves the list to a given filename"""
     with open(filename, "w") as f:
         f.write(output)
-    os.chmod(filename, 0o755)  # add execute permissions
+    chmod(filename, 0o755)  # add execute permissions
 
 
 def main():
@@ -172,28 +172,26 @@ def main():
     git_base = "https://github.com/"
 
     contributions_calendar = retrieve_contributions_calendar(username, git_base)
-
     max_daily_commits = find_max_daily_commits(contributions_calendar)
-
     m = calculate_multiplier(max_daily_commits)
 
-    repo = request_user_input("Enter the name of the repository to use by gitfiti: ")
+    repo = request_user_input("Enter the name of the repository to use by git-hired: ")
 
     print(
         (
-            "By default gitfiti.py matches the darkest pixel to the highest\n"
+            "By default git-hired.py matches the darkest pixel to the highest\n"
             "number of commits found in your GitHub commit/activity calendar,\n"
             "\n"
             "Currently this is: {0} commits\n"
             "\n"
-            'Enter the word "gitfiti" to exceed your max\n'
+            'Enter the word "git-hired" to exceed your max\n'
             "(this option generates WAY more commits)\n"
             "Any other input will cause the default matching behavior"
         ).format(max_daily_commits)
     )
     match = request_user_input()
 
-    match = m if (match == "gitfiti") else 1
+    match = m if (match == "git-hired") else 1
 
     start_date = get_start_date()
     end_date = get_end_date()
@@ -206,7 +204,7 @@ def main():
 
     output = fake_it(image, start_date, username, repo, git_url, fake_it_multiplier)
 
-    output_filename = "gitfiti.sh"
+    output_filename = "git-hired.sh"
     save(output, output_filename)
     print(f"{output_filename} saved.")
     print(f"Create a new(!) repo named {repo} at {git_base} and run the script")
