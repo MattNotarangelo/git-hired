@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2013 Eric Romano (@gelstudios)
-# Modified 2021 by Matthew Notarangelo (@MattNotarangelo)
+# Copyright (c) 2021 by Matthew Notarangelo (@MattNotarangelo)
+# Developed from Gitfiti - 2013 Eric Romano (@gelstudios)
 # released under The MIT license (MIT) http://opensource.org/licenses/MIT
-#
 
 from datetime import datetime, timedelta
 import itertools
@@ -14,13 +13,12 @@ import numpy as np
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
-
 def request_user_input(prompt='> '):
     """Request input from the user and return what has been entered."""
     return input(prompt)
 
-
 def generate_random_matrix(start_date, end_date):
+    """Takes start and end dates to return numpy matrix of randint [0,5]"""
     days_diff = ((end_date - start_date).days)
 
     weeks = days_diff
@@ -49,11 +47,6 @@ TITLE = '''
 /____/
 '''
 
-
-SHELLS = {
-  'bash': 'sh',
-  'powershell': 'ps1',
-}
 
 def retrieve_contributions_calendar(username, base_url):
     """retrieves the GitHub commit calendar data for a username"""
@@ -93,12 +86,11 @@ def calculate_multiplier(max_commits):
     if not m: 
         return 1
 
-    return int(math.ceil(m))
+    return math.ceil(m)
 
 
 def get_start_date():
-    """returns a datetime object for the first sunday after one year ago today
-    at 12:00 noon"""
+    """returns start datetime object from user input"""
     year = int(request_user_input("Start year: "))
     month = int(request_user_input("Start month: "))
     day = int(request_user_input("Start day: "))
@@ -106,16 +98,17 @@ def get_start_date():
     return datetime(year, month, day, 12)
 
 def get_end_date():
+    """returns end datetime object from user input"""
     year = int(request_user_input("End year: "))
     month = int(request_user_input("End month: "))
     day = int(request_user_input("End day: ")) 
 
     return datetime(year, month, day+1, 12)
 
-def generate_next_dates(start_date, offset=0):
+def generate_next_dates(start_date):
     """generator that returns the next date, requires a datetime object as
     input. The offset is in weeks"""
-    start = offset * 7
+    start = 0
     for i in itertools.count(start):
         yield start_date + timedelta(i)
 
@@ -131,24 +124,18 @@ def generate_values_in_date_order(image, multiplier=1):
             except:
                 yield 0
 
-def commit(commitdate, shell):
-    template_bash = (
+def commit(commitdate):
+    
+    template = (
         '''GIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={1} '''
         '''git commit --allow-empty -m "gitfiti" > /dev/null\n'''
     )
-    
-    template_powershell = (
-        '''$Env:GIT_AUTHOR_DATE="{0}"\n$Env:GIT_COMMITTER_DATE="{1}"\n'''
-        '''git commit --allow-empty -m "gitfiti" | Out-Null\n'''
-    )
-
-    template = template_bash if shell == 'bash' else template_powershell
 
     return template.format(commitdate.isoformat(), commitdate.isoformat())
 
 
-def fake_it(image, start_date, username, repo, git_url, shell, offset=0, multiplier=1):
-    template_bash = (
+def fake_it(image, start_date, username, repo, git_url, multiplier=1):
+    template = (
         '#!/usr/bin/env bash\n'
         'REPO={0}\n'
         'git init $REPO\n'
@@ -164,29 +151,11 @@ def fake_it(image, start_date, username, repo, git_url, shell, offset=0, multipl
         'git push -u origin main\n'
     )
 
-    template_powershell = (
-        'cd $PSScriptRoot\n'
-        '$REPO="{0}"\n'
-        'git init $REPO\n'
-        'cd $REPO\n'
-        'New-Item README.md -ItemType file | Out-Null\n'
-        'git add README.md\n'
-        'New-Item gitfiti -ItemType file | Out-Null\n'
-        'git add gitfiti\n'
-        '{1}\n'
-        'git branch -M main\n'
-        'git remote add origin {2}:{3}/$REPO.git\n'
-        'git pull origin main\n'
-        'git push -u origin main\n'
-    )
-
-    template = template_bash if shell == 'bash' else template_powershell
-
     strings = []
     for value, date in zip(generate_values_in_date_order(image, multiplier),
-            generate_next_dates(start_date, offset)):
+            generate_next_dates(start_date)):
         for _ in range(value):
-            strings.append(commit(date, shell))
+            strings.append(commit(date))
 
     return template.format(repo, ''.join(strings), git_url, username)
 
@@ -217,8 +186,6 @@ def main():
     repo = request_user_input(
         'Enter the name of the repository to use by gitfiti: ')
 
-    offset = 0
-
     print((
         'By default gitfiti.py matches the darkest pixel to the highest\n'
         'number of commits found in your GitHub commit/activity calendar,\n'
@@ -243,18 +210,13 @@ def main():
 
     git_url = 'git@github.com'
         
-    shell = ''
-    while shell not in SHELLS.keys(): 
-        shell = request_user_input(
-            'Enter the target shell ({}): '.format(' or '.join(SHELLS.keys())))
-
-    output = fake_it(image, start_date, username, repo, git_url, shell, offset,
+    output = fake_it(image, start_date, username, repo, git_url,
                      fake_it_multiplier)
 
-    output_filename = 'gitfiti.{}'.format(SHELLS[shell])
+    output_filename = 'gitfiti.sh'
     save(output, output_filename)
-    print('{} saved.'.format(output_filename))
-    print('Create a new(!) repo named {0} at {1} and run the script'.format(repo, git_base))
+    print(f"{output_filename} saved.")
+    print(f"Create a new(!) repo named {repo} at {git_base} and run the script")
 
 
 if __name__ == '__main__':
