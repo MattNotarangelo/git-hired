@@ -4,11 +4,9 @@ Boost your chances of getting hired by faking your GitHub contribution graph!
 
 ## Example
 **Before**:
-
 ![image](https://user-images.githubusercontent.com/81910488/131299688-afb378a6-9297-4a65-98c2-d217e9e8e455.png)
 
 **After**:
-
 ![image](https://user-images.githubusercontent.com/81910488/131299599-99170c31-a18e-4a61-8d14-0b5b60408853.png)
 
 ## Usage
