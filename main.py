@@ -6,16 +6,26 @@
 from datetime import datetime, timedelta
 from itertools import count
 from math import ceil
-from os import chmod
+from os import chmod, get_terminal_size
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 import numpy as np
 
 
+def print_section():
+    s = "-" * (get_terminal_size()[0] - 1)
+    print(s)
+    return
+
+
 def request_user_input(prompt="> "):
     """Request input from the user and return what has been entered."""
-    return input(prompt)
+    user_input = input(prompt)
+    if not user_input:
+        raise SystemExit("ValueError: not a valid input")
+
+    return user_input
 
 
 def generate_random_matrix(start_date, end_date):
@@ -79,22 +89,28 @@ def calculate_multiplier(max_commits):
     return ceil(m)
 
 
-def get_start_date():
-    """returns start datetime object from user input"""
-    year = int(request_user_input("Start year: "))
-    month = int(request_user_input("Start month: "))
-    day = int(request_user_input("Start day: "))
+def get_dates():
+    """returns datetime objects from user input"""
+    try:
+        year = int(request_user_input("Start year: "))
+        month = int(request_user_input("Start month: "))
+        day = int(request_user_input("Start day: "))
 
-    return datetime(year, month, day, 12)
+        start = datetime(year, month, day, 12)
 
+        year = int(request_user_input("End year: "))
+        month = int(request_user_input("End month: "))
+        day = int(request_user_input("End day: "))
 
-def get_end_date():
-    """returns end datetime object from user input"""
-    year = int(request_user_input("End year: "))
-    month = int(request_user_input("End month: "))
-    day = int(request_user_input("End day: "))
+        end = datetime(year, month, day + 1, 12)
 
-    return datetime(year, month, day + 1, 12)
+    except ValueError as e:
+        raise SystemExit("ValueError: Not a valid input") from e
+
+    if start > end:
+        raise SystemExit("ValueError: End date must be after start date")
+
+    return (start, end)
 
 
 def generate_next_dates(start_date):
@@ -164,6 +180,7 @@ def save(output, filename):
 
 def main():
 
+    print_section()
     username = request_user_input("Enter your GitHub username: ")
 
     git_base = "https://github.com/"
@@ -175,25 +192,21 @@ def main():
     repo = request_user_input(
         "Enter the name of the repository to use by git-hired: ")
 
-    print(("By default git-hired.py matches the darkest pixel to the highest\n"
-           "number of commits found in your GitHub commit/activity calendar,\n"
-           "\n"
-           "Currently this is: {0} commits\n"
-           "\n"
-           'Enter the word "git-hired" to exceed your max\n'
-           "(this option generates WAY more commits)\n"
-           "Any other input will cause the default matching behavior"
-          ).format(max_daily_commits))
-    match = request_user_input()
-
-    match = m if (match == "git-hired") else 1
-
-    start_date = get_start_date()
-    end_date = get_end_date()
+    start_date, end_date = get_dates()
 
     matrix = generate_random_matrix(start_date, end_date)
+    fake_it_multiplier = m
 
-    fake_it_multiplier = m * match
+    print_section()
+    print("By default git-hired.py matches the darkest pixel to the highest "
+          "number of commits found in your GitHub commit activity. Commits "
+          "will be added as per the following matrix, where:")
+
+    for i in range(5):
+        print(f"'{i}' = {i*m} commits")
+
+    print(matrix)
+    print_section()
 
     git_url = "git@github.com"
 
