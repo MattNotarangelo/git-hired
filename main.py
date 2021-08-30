@@ -38,7 +38,11 @@ def generate_random_matrix(start_date, end_date):
         weeks += 1
 
     weeks = int(weeks / 7)  # convert to weeks
-    random = np.random.randint(0, 5, (7, weeks))
+    if weeks <= 1:
+        random = np.random.randint(
+            1, 5, (7, weeks))  # force non-zero values if <= 1 week
+    else:
+        random = np.random.randint(0, 5, (7, weeks))
 
     for i in range(to_subtract_from_matrix):
         random[-1 - i][-1] = 0  # make additional days = 0
@@ -216,7 +220,8 @@ def main():
     output_filename = "git-hired.sh"
     save(output, output_filename)
     print(f"{output_filename} saved.")
-    print(f"Create a new(!) repo named {repo} at {git_base} and run the script")
+    print(f"Create a new(!!!) repo named {repo} at {git_base}, "
+          "then move the script to your root folder and run.")
 
 
 if __name__ == "__main__":
