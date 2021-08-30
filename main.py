@@ -190,7 +190,9 @@ def main():
     git_base = "https://github.com/"
 
     contributions_calendar = retrieve_contributions_calendar(username, git_base)
+
     max_daily_commits = find_max_daily_commits(contributions_calendar)
+
     m = calculate_multiplier(max_daily_commits)
 
     repo = request_user_input(
@@ -199,6 +201,7 @@ def main():
     start_date, end_date = get_dates()
 
     matrix = generate_random_matrix(start_date, end_date)
+
     fake_it_multiplier = m
 
     print_section()
