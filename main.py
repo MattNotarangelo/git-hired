@@ -39,8 +39,7 @@ def generate_random_matrix(start_date, end_date):
 
     weeks = int(weeks / 7)  # convert to weeks
     if weeks <= 1:
-        random = np.random.randint(
-            1, 5, (7, weeks))  # force non-zero values if <= 1 week
+        random = np.random.randint(1, 5, (7, weeks))  # force non-zero values if <= 1 week
     else:
         random = np.random.randint(0, 5, (7, weeks))
 
@@ -195,20 +194,32 @@ def main():
 
     m = calculate_multiplier(max_daily_commits)
 
-    repo = request_user_input(
-        "Enter the name of the repository to use by git-hired: ")
+    repo = request_user_input("Enter the name of the repository to use by git-hired: ")
 
     start_date, end_date = get_dates()
 
     matrix = generate_random_matrix(start_date, end_date)
 
     fake_it_multiplier = m
-
     print_section()
-    print("By default git-hired.py matches the darkest pixel to the highest "
-          "number of commits found in your GitHub commit activity. Commits "
-          "will be added as per the following matrix, where:")
 
+    print("By default git-hired.py matches the darkest pixel to the highest "
+          "number of commits found in your GitHub commit activity. Enter "
+          "how many commits the lightest pixel should have or leave blank "
+          "for default")
+
+    user_input = input()
+
+    if user_input:
+        try:
+            if int(user_input) <= 0:
+                raise SystemExit("ValueError: need to enter an int > 0")
+        except:
+            raise SystemExit("ValueError: need to enter an int > 0")
+
+        fake_it_multiplier = m = int(user_input)
+
+    print("Commits will be added as per the following matrix, where:")
     for i in range(5):
         print(f"'{i}' = {i*m} commits")
 
@@ -217,14 +228,12 @@ def main():
 
     git_url = "git@github.com"
 
-    output = fake_it(matrix, start_date, username, repo, git_url,
-                     fake_it_multiplier)
+    output = fake_it(matrix, start_date, username, repo, git_url, fake_it_multiplier)
 
     output_filename = "git-hired.sh"
     save(output, output_filename)
     print(f"{output_filename} saved.")
-    print(f"Create a new(!!!) repo named {repo} at {git_base}, "
-          "then move the script to your root folder and run.")
+    print(f"Create a new(!!!) repo named {repo} at {git_base}, then move the script to your root folder and run.")
 
 
 if __name__ == "__main__":
