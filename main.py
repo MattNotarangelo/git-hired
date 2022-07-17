@@ -164,12 +164,16 @@ def fake_it(matrix, start_date, username, repo, git_url, multiplier=1):
                 "git push -u origin main\n")
 
     strings = []
-    for value, date in zip(
-            generate_values_in_date_order(matrix, multiplier),
-            generate_next_dates(start_date),
-    ):
+    for value, date in zip(generate_values_in_date_order(matrix, multiplier), generate_next_dates(start_date)):
         for _ in range(value):
             strings.append(commit(date))
+
+    if len(strings) > 100:
+        strings.insert(0, "echo \"0% complete\"\n")
+        strings.insert(1 * len(strings) // 4, "echo \"25% complete\"\n")
+        strings.insert(2 * len(strings) // 4, "echo \"50% complete\"\n")
+        strings.insert(3 * len(strings) // 4, "echo \"75% complete\"\n")
+        strings.insert(4 * len(strings) // 4, "echo \"100% complete\"\n")
 
     return template.format(repo, "".join(strings), git_url, username)
 
