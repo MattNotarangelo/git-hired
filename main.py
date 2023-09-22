@@ -69,9 +69,9 @@ def parse_contributions_calendar(contributions_calendar):
     """Yield daily counts extracted from the contributions SVG."""
     for line in contributions_calendar.splitlines():
         for day in line.split():
-            if "data-count=" in day:
+            if "data-level=" in day:
                 commit_data = day.split("=")[1]
-                commit_data = commit_data.strip('"')
+                commit_data = commit_data.split('"')[1].strip('"')
                 yield int(commit_data)
 
 
