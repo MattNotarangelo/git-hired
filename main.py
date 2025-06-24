@@ -1,4 +1,5 @@
-""" Program to add random github commit data between two dates """
+"""Program to add random github commit data between two dates"""
+
 # Copyright (c) 2021 by Matthew Notarangelo (@MattNotarangelo)
 # Developed from Gitfiti - 2013 Eric Romano (@gelstudios)
 # released under The MIT license (MIT) http://opensource.org/licenses/MIT
@@ -30,18 +31,18 @@ def request_user_input(prompt="> "):
 
 def generate_random_matrix(start_date, end_date):
     """Takes start and end dates to return numpy matrix of randint [0,5]"""
-    weeks = (end_date - start_date).days  # gets days between two dates
+    days = (end_date - start_date).days  # gets days between two dates
     to_subtract_from_matrix = 0
 
-    while weeks % 7 != 0:  # round up to whole number of weeks
+    while days % 7 != 0:  # round up to whole number of weeks
         to_subtract_from_matrix += 1  # counts excess days to remove later
-        weeks += 1
+        days += 1
 
-    weeks = int(weeks / 7)  # convert to weeks
-    if weeks <= 1:
-        random = np.random.randint(1, 5, (7, weeks))  # force non-zero values if <= 1 week
+    days = int(days / 7)  # convert to weeks
+    if days <= 1:
+        random = np.random.randint(1, 5, (7, days))  # force non-zero values if <= 1 week
     else:
-        random = np.random.randint(0, 5, (7, weeks))
+        random = np.random.randint(0, 5, (7, days))
 
     for i in range(to_subtract_from_matrix):
         random[-1 - i][-1] = 0  # make additional days = 0
@@ -141,27 +142,28 @@ def generate_values_in_date_order(matrix, multiplier=1):
 
 def commit(commitdate):
     """returns commit commands"""
-    template = ("""GIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={1} """
-                """git commit --allow-empty -m "git-hired" > /dev/null\n""")
+    template = """GIT_AUTHOR_DATE={0} GIT_COMMITTER_DATE={1} """ """git commit --allow-empty -m "git-hired" > /dev/null\n"""
 
     return template.format(commitdate.isoformat(), commitdate.isoformat())
 
 
 def fake_it(matrix, start_date, username, repo, git_url, multiplier=1):
     """return completed shell script"""
-    template = ("#!/usr/bin/env bash\n"
-                "REPO={0}\n"
-                "git init $REPO\n"
-                "cd $REPO\n"
-                "touch README.md\n"
-                "git add README.md\n"
-                "touch git-hired\n"
-                "git add git-hired\n"
-                "{1}\n"
-                "git branch -M main\n"
-                "git remote add origin {2}:{3}/$REPO.git\n"
-                "git pull origin main\n"
-                "git push -u origin main\n")
+    template = (
+        "#!/usr/bin/env bash\n"
+        "REPO={0}\n"
+        "git init $REPO\n"
+        "cd $REPO\n"
+        "touch README.md\n"
+        "git add README.md\n"
+        "touch git-hired\n"
+        "git add git-hired\n"
+        "{1}\n"
+        "git branch -M main\n"
+        "git remote add origin {2}:{3}/$REPO.git\n"
+        "git pull origin main\n"
+        "git push -u origin main\n"
+    )
 
     strings = []
     for value, date in zip(generate_values_in_date_order(matrix, multiplier), generate_next_dates(start_date)):
@@ -169,11 +171,11 @@ def fake_it(matrix, start_date, username, repo, git_url, multiplier=1):
             strings.append(commit(date))
 
     if len(strings) > 100:
-        strings.insert(0, "echo \"0% complete\"\n")
-        strings.insert(1 * len(strings) // 4, "echo \"25% complete\"\n")
-        strings.insert(2 * len(strings) // 4, "echo \"50% complete\"\n")
-        strings.insert(3 * len(strings) // 4, "echo \"75% complete\"\n")
-        strings.insert(4 * len(strings) // 4, "echo \"100% complete\"\n")
+        strings.insert(0, 'echo "0% complete"\n')
+        strings.insert(1 * len(strings) // 4, 'echo "25% complete"\n')
+        strings.insert(2 * len(strings) // 4, 'echo "50% complete"\n')
+        strings.insert(3 * len(strings) // 4, 'echo "75% complete"\n')
+        strings.insert(4 * len(strings) // 4, 'echo "100% complete"\n')
 
     return template.format(repo, "".join(strings), git_url, username)
 
@@ -207,10 +209,12 @@ def main():
     fake_it_multiplier = m
     print_section()
 
-    print("By default git-hired.py matches the darkest pixel to the highest "
-          "number of commits found in your GitHub commit activity. Enter "
-          "how many commits the lightest pixel should have or leave blank "
-          "for default")
+    print(
+        "By default git-hired.py matches the darkest pixel to the highest "
+        "number of commits found in your GitHub commit activity. Enter "
+        "how many commits the lightest pixel should have or leave blank "
+        "for default"
+    )
 
     user_input = input()
 
