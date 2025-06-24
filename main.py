@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from itertools import count
 from math import ceil
 from os import chmod, get_terminal_size
+import os
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
@@ -207,7 +208,7 @@ def main() -> None:
     output = fake_it(matrix, start_date, username, repo, git_url, fake_it_multiplier)
     output_filename = "git-hired.sh"
     save(output, output_filename)
-    print(f"{output_filename} saved.")
+    print(f"{output_filename} saved to pwd: {os.getcwd()}.")
     print(f"Create a new repository named {repo} at {git_base}, then move the script to your root folder and run it.")
 
 
