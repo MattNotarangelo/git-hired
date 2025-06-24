@@ -1,15 +1,10 @@
-[tool.poetry]
+[project]
 name = "git-hired"
 version = "0.1.0"
-description = ""
-authors = ["MattNotarangelo <matt.notarangelo1@gmail.com>"]
+description = "Add your description here"
 readme = "README.md"
-
-[tool.poetry.dependencies]
-python = ">=3.11,<3.13"
-numpy = "^1.26.0"
-
-
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy>=2.3.1",
+    "pytest>=8.4.1",
+]
