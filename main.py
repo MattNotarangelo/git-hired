@@ -31,20 +31,15 @@ def request_user_input(prompt="> "):
 
 def generate_random_matrix(start_date, end_date):
     """Takes start and end dates to return numpy matrix of randint [0,5]"""
-    days = (end_date - start_date).days  # gets days between two dates
-    to_subtract_from_matrix = 0
+    days = (end_date - start_date).days + 1  # gets days between two dates
 
-    while days % 7 != 0:  # round up to whole number of weeks
-        to_subtract_from_matrix += 1  # counts excess days to remove later
-        days += 1
-
-    days = int(days / 7)  # convert to weeks
-    if days <= 1:
-        random = np.random.randint(1, 5, (7, days))  # force non-zero values if <= 1 week
+    weeks = ceil(days / 7)  # convert to weeks, round up
+    if weeks <= 1:
+        random = np.random.randint(1, 5, (7, weeks))  # force non-zero values if <= 1 week
     else:
-        random = np.random.randint(0, 5, (7, days))
+        random = np.random.randint(0, 5, (7, weeks))
 
-    for i in range(to_subtract_from_matrix):
+    for i in range(days % 7):
         random[-1 - i][-1] = 0  # make additional days = 0
 
     return random
@@ -78,9 +73,7 @@ def parse_contributions_calendar(contributions_calendar):
 
 def find_max_daily_commits(contributions_calendar):
     """finds the highest number of commits in one day"""
-    daily_counts = parse_contributions_calendar(contributions_calendar)
-
-    return max(daily_counts)
+    return max(parse_contributions_calendar(contributions_calendar))
 
 
 def calculate_multiplier(max_commits):
@@ -123,7 +116,7 @@ def generate_next_dates(start_date):
     start = 0
 
     for i in count(start):
-        yield start_date + timedelta(i)
+        yield start_date + timedelta(days=i)
 
 
 def generate_values_in_date_order(matrix, multiplier=1):
