@@ -130,11 +130,14 @@ def build_script(matrix: Matrix, start: date, repo: str, remote_url: str, multip
         "touch README.md git-hired\n"
         "git add README.md git-hired\n"
         f"{''.join(commands)}"
-        "git branch -M main\n"
         f"git remote add origin {shlex.quote(remote_url)}\n"
+        "# GitHub only counts commits on the default branch, so use the remote's (main if it is empty).\n"
+        'BRANCH=$(git ls-remote --symref origin HEAD | awk \'$1 == "ref:" {sub("refs/heads/", "", $2); print $2}\')\n'
+        "BRANCH=${BRANCH:-main}\n"
+        'git branch -M "$BRANCH"\n'
         "# Merge anything already on the remote; fails harmlessly if the remote is empty.\n"
-        "git pull --no-rebase --no-edit --allow-unrelated-histories origin main || true\n"
-        "git push -u origin main\n"
+        'git pull --no-rebase --no-edit --allow-unrelated-histories origin "$BRANCH" || true\n'
+        'git push -u origin "$BRANCH"\n'
     )
 
 

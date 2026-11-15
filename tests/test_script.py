@@ -68,3 +68,25 @@ def test_script_refuses_to_overwrite_existing_directory(tmp_path, git_env):
     result = run_script(build_script([[1]] * 7, date(2024, 1, 1), "fake", "unused"), tmp_path, git_env)
     assert result.returncode == 1
     assert "already exists" in result.stderr
+
+
+@pytest.mark.parametrize("branch", ["main", "master"])
+def test_script_merges_into_existing_default_branch(tmp_path, git_env, branch):
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "--bare", "--quiet", "-b", branch, str(remote)], check=True, env=git_env)
+    seed = tmp_path / "seed"
+    subprocess.run(["git", "init", "--quiet", "-b", branch, str(seed)], check=True, env=git_env)
+    (seed / "README.md").write_text("existing\n")
+    for args in (["add", "README.md"], ["commit", "-qm", "existing"], ["push", "-q", str(remote), branch]):
+        subprocess.run(["git", *args], cwd=seed, check=True, env=git_env)
+
+    result = run_script(build_script([[1]] * 7, date(2024, 1, 7), "fake", str(remote)), tmp_path, git_env)
+    assert result.returncode == 0, result.stderr
+
+    def git(*args):
+        return subprocess.run(["git", *args], cwd=remote, env=git_env, capture_output=True, text=True).stdout
+
+    assert git("for-each-ref", "--format=%(refname:short)", "refs/heads").split() == [branch]
+    assert "existing" in git("log", branch, "--format=%s")
+    assert git("log", branch, "--format=%s").count("git-hired") == 7
+    assert git("show", f"{branch}:README.md") == "existing\n"
