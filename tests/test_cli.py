@@ -29,8 +29,23 @@ def no_tty(monkeypatch):
 
 
 def feed(monkeypatch, *answers):
+    """Answer input() prompts in order; returns the list of prompts shown."""
     it = iter(answers)
-    monkeypatch.setattr("builtins.input", lambda _prompt: next(it))
+    prompts = []
+
+    def fake_input(text):
+        prompts.append(text)
+        return next(it)
+
+    monkeypatch.setattr("builtins.input", fake_input)
+    return prompts
+
+
+@pytest.fixture
+def busiest_day(monkeypatch):
+    """Pretend the user's busiest day on GitHub had 8 contributions (default multiplier 2)."""
+    monkeypatch.setattr(cli, "fetch_calendar", lambda username: "html")
+    monkeypatch.setattr(cli, "max_daily_contributions", lambda html: 8)
 
 
 def test_non_interactive(tmp_path, no_tty, capsys):
@@ -104,7 +119,7 @@ def test_invalid_arguments_rejected(flag, value, capsys):
     assert "error" in capsys.readouterr().err
 
 
-def test_interactive(tmp_path, tty, monkeypatch, capsys):
+def test_interactive(tmp_path, tty, busiest_day, monkeypatch, capsys):
     feed(monkeypatch, "octocat", "repo", "2024-01-31", "2024-02-29", "3")
     out = tmp_path / "s.sh"
     assert cli.main(["-o", str(out)]) == 0
@@ -113,7 +128,7 @@ def test_interactive(tmp_path, tty, monkeypatch, capsys):
     assert "2024-03-" not in out.read_text()
 
 
-def test_interactive_reprompts_on_invalid_input(tmp_path, tty, monkeypatch, capsys):
+def test_interactive_reprompts_on_invalid_input(tmp_path, tty, busiest_day, monkeypatch, capsys):
     feed(monkeypatch, "", "bad user", "octocat", "repo", "2024-1-1", "2024-01-01", "2024-01-07", "0", "1")
     assert cli.main(["-o", str(tmp_path / "s.sh")]) == 0
     err = capsys.readouterr().err
@@ -122,12 +137,24 @@ def test_interactive_reprompts_on_invalid_input(tmp_path, tty, monkeypatch, caps
     assert "greater than 0" in err
 
 
-def test_interactive_blank_multiplier_uses_github(tmp_path, tty, monkeypatch, capsys):
-    monkeypatch.setattr(cli, "fetch_calendar", lambda username: "html")
-    monkeypatch.setattr(cli, "max_daily_contributions", lambda html: 8)
-    feed(monkeypatch, "octocat", "repo", "2024-01-01", "2024-01-07", "")
+def test_interactive_blank_multiplier_uses_github(tmp_path, tty, busiest_day, monkeypatch, capsys):
+    prompts = feed(monkeypatch, "octocat", "repo", "2024-01-01", "2024-01-07", "")
     assert cli.main(["-o", str(tmp_path / "s.sh")]) == 0
-    assert "4 = 8 commits" in capsys.readouterr().out
+    assert prompts[-1] == "Commits per shade level (blank for 2): "
+    out = capsys.readouterr().out
+    assert "busiest day on GitHub had 8 contributions" in out
+    assert "4 = 8 commits" in out
+
+
+def test_interactive_github_failure_asks_for_multiplier(tmp_path, tty, monkeypatch, capsys):
+    def fail(username):
+        raise CalendarError("could not fetch")
+
+    monkeypatch.setattr(cli, "fetch_calendar", fail)
+    prompts = feed(monkeypatch, "octocat", "repo", "2024-01-01", "2024-01-07", "", "3")
+    assert cli.main(["-o", str(tmp_path / "s.sh")]) == 0
+    assert prompts[-1] == "Commits per shade level: "  # no default offered, blank re-prompts
+    assert "could not fetch" in capsys.readouterr().err
 
 
 def test_ctrl_c_exits_cleanly(tty, monkeypatch):

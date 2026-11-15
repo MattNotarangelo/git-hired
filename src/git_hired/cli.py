@@ -107,12 +107,25 @@ def prompt(label: str, convert: Callable[[str], T]) -> T:
             print(f"  {e}", file=sys.stderr)
 
 
-def prompt_multiplier() -> int | None:
-    """Ask for commits per shade level; blank (or non-interactive) means derive it from GitHub."""
+def choose_multiplier(username: str) -> int:
+    """Return commits per shade level, defaulting to one where the darkest shade matches the user's busiest day."""
+    try:
+        busiest = max_daily_contributions(fetch_calendar(username))
+    except CalendarError as e:
+        if not sys.stdin.isatty():
+            raise CliError(f"{e} (use --multiplier to skip this lookup)") from e
+        print(f"Could not work out a default from GitHub: {e}", file=sys.stderr)
+        return prompt("Commits per shade level", parse_positive_int)
+    default = calculate_multiplier(busiest)
     if not sys.stdin.isatty():
-        return None
-    print("By default the darkest shade matches your busiest day on GitHub.")
-    return prompt("Commits per shade level (blank for default)", lambda raw: parse_positive_int(raw) if raw else None)
+        return default
+    print(
+        f"Your busiest day on GitHub had {busiest} contributions, "
+        f"so by default each shade level is {default} commits (darkest = {default * (LEVELS - 1)})."
+    )
+    return prompt(
+        f"Commits per shade level (blank for {default})", lambda raw: parse_positive_int(raw) if raw else default
+    )
 
 
 def run(args: argparse.Namespace) -> None:
@@ -124,12 +137,7 @@ def run(args: argparse.Namespace) -> None:
     if end < start:
         raise CliError("end date must not be before start date")
 
-    multiplier = args.multiplier or prompt_multiplier()
-    if multiplier is None:
-        try:
-            multiplier = calculate_multiplier(max_daily_contributions(fetch_calendar(username)))
-        except CalendarError as e:
-            raise CliError(f"{e} (use --multiplier to skip this lookup)") from e
+    multiplier = args.multiplier or choose_multiplier(username)
 
     matrix = generate_random_matrix(start, end, random.Random(args.seed))
     remote_url = args.remote_url or default_remote_url(username, repo)
