@@ -32,18 +32,15 @@ def run_script(script, cwd, env):
     return subprocess.run(["bash", str(path)], cwd=cwd, env=env, capture_output=True, text=True)
 
 
-@pytest.mark.parametrize("inside_repo", [False, True])
-def test_script_creates_and_pushes_history(tmp_path, git_env, inside_repo):
+def test_script_creates_and_pushes_history(tmp_path, git_env):
     remote = tmp_path / "remote.git"
     subprocess.run(["git", "init", "--bare", "--quiet", str(remote)], check=True, env=git_env)
     work = tmp_path / "work"
     work.mkdir()
-    if inside_repo:  # the script works even when run from inside another repository
-        subprocess.run(["git", "init", "--quiet", str(work)], check=True, env=git_env)
 
     matrix = [[1, 3], [0, 2], [2, 0], [0, 0], [4, 0], [0, 0], [1, 0]]
     multiplier = 30  # enough commits to exercise the progress output
-    result = run_script(build_script(matrix, date(2024, 2, 25), "fake", str(remote), multiplier), work, git_env)
+    result = run_script(build_script(matrix, date(2024, 2, 25), str(remote), multiplier), work, git_env)
     assert result.returncode == 0, result.stderr
     assert "100% complete" in result.stdout
 
@@ -63,11 +60,16 @@ def test_script_creates_and_pushes_history(tmp_path, git_env, inside_repo):
     assert Counter(log) == expected
 
 
-def test_script_refuses_to_overwrite_existing_directory(tmp_path, git_env):
-    (tmp_path / "fake").mkdir()
-    result = run_script(build_script([[1]] * 7, date(2024, 1, 1), "fake", "unused"), tmp_path, git_env)
-    assert result.returncode == 1
-    assert "already exists" in result.stderr
+def test_script_can_rerun_and_leaves_nothing_behind(tmp_path, git_env):
+    remote = tmp_path / "remote.git"
+    subprocess.run(["git", "init", "--bare", "--quiet", str(remote)], check=True, env=git_env)
+    work = tmp_path / "work"
+    work.mkdir()
+    script = build_script([[1]] * 7, date(2024, 1, 7), str(remote))
+    for _ in range(2):
+        result = run_script(script, work, git_env)
+        assert result.returncode == 0, result.stderr
+        assert [p.name for p in work.iterdir()] == ["git-hired.sh"]
 
 
 @pytest.mark.parametrize("branch", ["main", "master"])
@@ -80,7 +82,7 @@ def test_script_merges_into_existing_default_branch(tmp_path, git_env, branch):
     for args in (["add", "README.md"], ["commit", "-qm", "existing"], ["push", "-q", str(remote), branch]):
         subprocess.run(["git", *args], cwd=seed, check=True, env=git_env)
 
-    result = run_script(build_script([[1]] * 7, date(2024, 1, 7), "fake", str(remote)), tmp_path, git_env)
+    result = run_script(build_script([[1]] * 7, date(2024, 1, 7), str(remote)), tmp_path, git_env)
     assert result.returncode == 0, result.stderr
 
     def git(*args):

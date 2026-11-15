@@ -52,7 +52,6 @@ def test_non_interactive(tmp_path, no_tty, capsys):
     out = tmp_path / "script.sh"
     assert cli.main([*FULL_ARGS, "-o", str(out)]) == 0
     script = out.read_text()
-    assert "REPO=repo\n" in script
     assert "git remote add origin git@github.com:octocat/repo.git\n" in script
     assert os.stat(out).st_mode & stat.S_IXUSR
     output = capsys.readouterr().out

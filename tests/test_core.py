@@ -155,16 +155,15 @@ def test_with_progress_marks_quarters():
 
 def test_build_script_structure():
     matrix = [[1, 0], [0, 1], [0, 0], [0, 0], [0, 0], [0, 0], [0, 0]]
-    script = build_script(matrix, date(2024, 1, 1), "testrepo", "git@github.com:testuser/testrepo.git")
+    script = build_script(matrix, date(2024, 1, 1), "git@github.com:testuser/testrepo.git")
     assert script.startswith("#!/usr/bin/env bash\nset -euo pipefail\n")
-    assert "REPO=testrepo\n" in script
     assert "git remote add origin git@github.com:testuser/testrepo.git\n" in script
     assert script.count("git commit") == 2
 
 
 def test_build_script_quotes_values():
     matrix = [[0]] * 7
-    script = build_script(matrix, date(2024, 1, 1), "repo", "https://example.com/a b.git")
+    script = build_script(matrix, date(2024, 1, 1), "https://example.com/a b.git")
     assert "git remote add origin 'https://example.com/a b.git'\n" in script
 
 

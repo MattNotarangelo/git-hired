@@ -114,19 +114,17 @@ def with_progress(commands: list[str]) -> list[str]:
     return out
 
 
-def build_script(matrix: Matrix, start: date, repo: str, remote_url: str, multiplier: int = 1) -> str:
-    """Return a bash script that creates ``repo`` with the matrix's commit history and pushes it."""
+def build_script(matrix: Matrix, start: date, remote_url: str, multiplier: int = 1) -> str:
+    """Return a bash script that builds the matrix's commit history in a temp folder and pushes it to ``remote_url``."""
     commands = with_progress(commit_commands(matrix, start, multiplier))
     return (
         "#!/usr/bin/env bash\n"
         "set -euo pipefail\n"
-        f"REPO={shlex.quote(repo)}\n"
-        'if [ -e "$REPO" ]; then\n'
-        '  echo "error: $REPO already exists in $(pwd)" >&2\n'
-        "  exit 1\n"
-        "fi\n"
-        'git init --quiet "$REPO"\n'
-        'cd "$REPO"\n'
+        "# Build the history in a throwaway folder, so reruns never clash and nothing is left behind.\n"
+        "WORKDIR=$(mktemp -d)\n"
+        "trap 'rm -rf \"$WORKDIR\"' EXIT\n"
+        'git init --quiet "$WORKDIR"\n'
+        'cd "$WORKDIR"\n'
         "touch README.md git-hired\n"
         "git add README.md git-hired\n"
         f"{''.join(commands)}"

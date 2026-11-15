@@ -141,7 +141,7 @@ def run(args: argparse.Namespace) -> None:
 
     matrix = generate_random_matrix(start, end, random.Random(args.seed))
     remote_url = args.remote_url or default_remote_url(username, repo)
-    script = build_script(matrix, start, repo, remote_url, multiplier)
+    script = build_script(matrix, start, remote_url, multiplier)
     try:
         args.output.write_text(script)
         args.output.chmod(0o755)
@@ -157,7 +157,7 @@ def run(args: argparse.Namespace) -> None:
     print_section()
     print(f"Wrote {args.output.resolve()}")
     print(f"1. Create an empty repository named {repo!r} on GitHub.")
-    print(f"2. Run {args.output} from any folder; it creates {repo!r} there and pushes it.")
+    print(f"2. Run {args.output} from any folder; it pushes the commits to {remote_url}.")
 
 
 def main(argv: Sequence[str] | None = None) -> int:
