@@ -19,6 +19,7 @@ from git_hired.core import (
     generate_random_matrix,
     validate_repo,
     validate_username,
+    values_in_date_order,
 )
 from git_hired.github import CalendarError, fetch_calendar, max_daily_contributions
 
@@ -144,10 +145,11 @@ def run(args: argparse.Namespace) -> None:
     for level in range(LEVELS):
         print(f"  {level} = {level * multiplier} commits")
     print(format_matrix(matrix))
+    print(f"Total: {sum(values_in_date_order(matrix, multiplier))} commits")
     print_section()
     print(f"Wrote {args.output.resolve()}")
     print(f"1. Create an empty repository named {repo!r} on GitHub.")
-    print("2. Move the script to a folder that is not inside a git repository and run it.")
+    print(f"2. Run {args.output} from any folder; it creates {repo!r} there and pushes it.")
 
 
 def main(argv: Sequence[str] | None = None) -> int:

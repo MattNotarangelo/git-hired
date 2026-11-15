@@ -12,6 +12,7 @@ from git_hired.core import (
     default_remote_url,
     format_matrix,
     generate_random_matrix,
+    grid_start,
     validate_repo,
     validate_username,
     values_in_date_order,
@@ -46,9 +47,33 @@ def test_default_remote_url():
 
 
 def test_generate_random_matrix_shape():
-    matrix = generate_random_matrix(date(2024, 1, 1), date(2024, 1, 28))
+    # 2024-01-07 is a Sunday, so 28 days fill exactly 4 columns.
+    matrix = generate_random_matrix(date(2024, 1, 7), date(2024, 2, 3))
     assert len(matrix) == 7
     assert all(len(row) == 4 for row in matrix)
+
+
+@pytest.mark.parametrize(
+    ("start", "expected"),
+    [
+        (date(2024, 1, 7), date(2024, 1, 7)),
+        (date(2024, 1, 10), date(2024, 1, 7)),
+        (date(2024, 1, 13), date(2024, 1, 7)),
+    ],
+)
+def test_grid_start_is_previous_sunday(start, expected):
+    assert grid_start(start) == expected
+
+
+def test_generate_random_matrix_rows_are_weekdays():
+    # Wednesday 2024-01-03 to Tuesday 2024-01-09: row 0 is Sunday, like GitHub's graph.
+    for seed in range(20):
+        matrix = generate_random_matrix(date(2024, 1, 3), date(2024, 1, 9), random.Random(seed))
+        values = list(values_in_date_order(matrix))
+        assert len(values) == 14
+        assert values[:3] == [0, 0, 0]  # Sun-Tue before the start
+        assert all(v >= 1 for v in values[3:10])  # a range of a week or less fills every day
+        assert values[10:] == [0, 0, 0, 0]  # after the end
 
 
 def test_generate_random_matrix_values_in_range():
@@ -57,13 +82,13 @@ def test_generate_random_matrix_values_in_range():
 
 
 def test_generate_random_matrix_single_week_has_no_empty_days():
-    matrix = generate_random_matrix(date(2024, 1, 1), date(2024, 1, 7))
+    matrix = generate_random_matrix(date(2024, 1, 7), date(2024, 1, 13))
     assert len(matrix[0]) == 1
     assert all(row[0] >= 1 for row in matrix)
 
 
 def test_generate_random_matrix_single_day():
-    matrix = generate_random_matrix(date(2024, 1, 1), date(2024, 1, 1))
+    matrix = generate_random_matrix(date(2024, 1, 7), date(2024, 1, 7))
     values = list(values_in_date_order(matrix))
     assert values[0] >= 1
     assert values[1:] == [0] * 6
@@ -72,7 +97,7 @@ def test_generate_random_matrix_single_day():
 def test_generate_random_matrix_no_commits_after_end_date():
     # 10 days span two weeks; the last 4 cells fall after the end date.
     for seed in range(20):
-        matrix = generate_random_matrix(date(2024, 1, 1), date(2024, 1, 10), random.Random(seed))
+        matrix = generate_random_matrix(date(2024, 1, 7), date(2024, 1, 16), random.Random(seed))
         assert list(values_in_date_order(matrix))[10:] == [0, 0, 0, 0]
 
 
@@ -106,7 +131,8 @@ def test_commit_command():
 
 
 def test_commit_commands_dates_and_counts():
-    matrix = [[2], [0], [1], [0], [0], [0], [0]]
+    # Tuesday start: the grid begins on Sunday 2024-01-28, so row 2 is the start date.
+    matrix = [[0], [0], [2], [0], [1], [0], [0]]
     commands = commit_commands(matrix, date(2024, 1, 30), multiplier=1)
     assert len(commands) == 3
     assert commands[0].startswith("GIT_AUTHOR_DATE=2024-01-30T12:00:00")

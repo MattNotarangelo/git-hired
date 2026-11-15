@@ -1,4 +1,5 @@
 import os
+import re
 import stat
 
 import pytest
@@ -39,7 +40,9 @@ def test_non_interactive(tmp_path, no_tty, capsys):
     assert "REPO=repo\n" in script
     assert "git remote add origin git@github.com:octocat/repo.git\n" in script
     assert os.stat(out).st_mode & stat.S_IXUSR
-    assert "0 = 0 commits" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "0 = 0 commits" in output
+    assert re.search(r"Total: \d+ commits", output)
 
 
 def test_seed_makes_output_reproducible(tmp_path, no_tty):
