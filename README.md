@@ -31,7 +31,7 @@ Boost your chances of getting hired by faking your GitHub contribution graph!
         --username octocat --repo my-repo --start 2025-01-01 --end 2025-12-31
     ```
 
-3.  Move `git-hired.sh` to a folder that is not inside a git repository and run it (this may take a while).
+3.  Run `./git-hired.sh` from any folder. It creates the repository in a new folder there and pushes it (this may take a while).
 
 ### Options
 

@@ -1,7 +1,8 @@
 """Fetch and parse a user's public GitHub contribution calendar."""
 
 import re
-from urllib.error import HTTPError, URLError
+from http.client import HTTPException
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 from git_hired import __version__
@@ -30,7 +31,8 @@ def fetch_calendar(username: str, timeout: float = TIMEOUT_SECONDS) -> str:
         if e.code == 404:
             raise CalendarError(f"GitHub user {username!r} not found") from e
         raise CalendarError(f"could not fetch {url}: {e}") from e
-    except (URLError, TimeoutError) as e:
+    # OSError covers URLError, timeouts and dropped connections; HTTPException covers truncated replies.
+    except (OSError, HTTPException) as e:
         raise CalendarError(f"could not fetch {url}: {e}") from e
 
 

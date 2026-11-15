@@ -1,4 +1,5 @@
 import io
+from http.client import IncompleteRead, RemoteDisconnected
 from urllib.error import HTTPError, URLError
 
 import pytest
@@ -80,7 +81,16 @@ def test_fetch_calendar_http_error(monkeypatch):
         fetch_calendar("octocat")
 
 
-@pytest.mark.parametrize("error", [URLError("no network"), TimeoutError("timed out")])
+@pytest.mark.parametrize(
+    "error",
+    [
+        URLError("no network"),
+        TimeoutError("timed out"),
+        ConnectionResetError("reset"),
+        RemoteDisconnected("closed"),
+        IncompleteRead(b""),
+    ],
+)
 def test_fetch_calendar_network_error(monkeypatch, error):
     def fake_urlopen(request, timeout):
         raise error

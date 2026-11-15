@@ -45,22 +45,29 @@ def default_remote_url(username: str, repo: str) -> str:
     return f"git@github.com:{username}/{repo}.git"
 
 
-def generate_random_matrix(start: date, end: date, rng: random.Random | None = None) -> Matrix:
-    """Return a 7 x weeks matrix of shade levels covering start..end (inclusive).
+def grid_start(start: date) -> date:
+    """Return the Sunday on or before ``start``; GitHub's graph rows run Sunday to Saturday."""
+    return start - timedelta(days=(start.weekday() + 1) % DAYS_PER_WEEK)
 
-    Cell ``[row][col]`` is the day ``start + col * 7 + row``; cells after ``end`` are 0.
+
+def generate_random_matrix(start: date, end: date, rng: random.Random | None = None) -> Matrix:
+    """Return a 7 x weeks matrix of shade levels laid out like GitHub's graph.
+
+    Cell ``[row][col]`` is the day ``grid_start(start) + col * 7 + row``; cells outside start..end are 0.
     """
     if end < start:
         raise ValueError("end date must not be before start date")
     rng = rng or random.Random()
     days = (end - start).days + 1
-    weeks = ceil(days / DAYS_PER_WEEK)
-    # A single week has little to show, so make sure every day gets at least one commit.
-    low = 1 if weeks == 1 else 0
+    lead = (start - grid_start(start)).days
+    weeks = ceil((lead + days) / DAYS_PER_WEEK)
+    # A range of a week or less has little to show, so make sure every day gets at least one commit.
+    low = 1 if days <= DAYS_PER_WEEK else 0
     matrix = [[rng.randint(low, LEVELS - 1) for _ in range(weeks)] for _ in range(DAYS_PER_WEEK)]
-    for offset in range(days, weeks * DAYS_PER_WEEK):
-        week, day = divmod(offset, DAYS_PER_WEEK)
-        matrix[day][week] = 0
+    for offset in range(weeks * DAYS_PER_WEEK):
+        if not lead <= offset < lead + days:
+            week, day = divmod(offset, DAYS_PER_WEEK)
+            matrix[day][week] = 0
     return matrix
 
 
@@ -83,10 +90,11 @@ def commit_command(when: datetime) -> str:
 
 
 def commit_commands(matrix: Matrix, start: date, multiplier: int = 1) -> list[str]:
-    """Return one commit command per commit described by the matrix."""
+    """Return one commit command per commit described by a matrix from ``generate_random_matrix(start, ...)``."""
+    first = grid_start(start)
     commands = []
     for offset, count in enumerate(values_in_date_order(matrix, multiplier)):
-        when = datetime.combine(start + timedelta(days=offset), COMMIT_TIME)
+        when = datetime.combine(first + timedelta(days=offset), COMMIT_TIME)
         commands.extend([commit_command(when)] * count)
     return commands
 
@@ -122,11 +130,14 @@ def build_script(matrix: Matrix, start: date, repo: str, remote_url: str, multip
         "touch README.md git-hired\n"
         "git add README.md git-hired\n"
         f"{''.join(commands)}"
-        "git branch -M main\n"
         f"git remote add origin {shlex.quote(remote_url)}\n"
+        "# GitHub only counts commits on the default branch, so use the remote's (main if it is empty).\n"
+        'BRANCH=$(git ls-remote --symref origin HEAD | awk \'$1 == "ref:" {sub("refs/heads/", "", $2); print $2}\')\n'
+        "BRANCH=${BRANCH:-main}\n"
+        'git branch -M "$BRANCH"\n'
         "# Merge anything already on the remote; fails harmlessly if the remote is empty.\n"
-        "git pull --no-rebase --no-edit --allow-unrelated-histories origin main || true\n"
-        "git push -u origin main\n"
+        'git pull --no-rebase --no-edit --allow-unrelated-histories origin "$BRANCH" || true\n'
+        'git push -u origin "$BRANCH"\n'
     )
 
 
