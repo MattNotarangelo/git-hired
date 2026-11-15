@@ -120,8 +120,8 @@ def choose_multiplier(username: str) -> int:
     if not sys.stdin.isatty():
         return default
     print(
-        f"Your busiest day on GitHub had {busiest} contributions, "
-        f"so by default each shade level is {default} commits (darkest = {default * (LEVELS - 1)})."
+        f"GitHub shades each day in {LEVELS - 1} levels. Your busiest day had {busiest} contributions, "
+        f"so by default each level is {default} commits (darkest = {default * (LEVELS - 1)})."
     )
     return prompt(
         f"Commits per shade level (blank for {default})", lambda raw: parse_positive_int(raw) if raw else default

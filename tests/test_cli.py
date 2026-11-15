@@ -142,7 +142,7 @@ def test_interactive_blank_multiplier_uses_github(tmp_path, tty, busiest_day, mo
     assert cli.main(["-o", str(tmp_path / "s.sh")]) == 0
     assert prompts[-1] == "Commits per shade level (blank for 2): "
     out = capsys.readouterr().out
-    assert "busiest day on GitHub had 8 contributions" in out
+    assert "GitHub shades each day in 4 levels. Your busiest day had 8 contributions, " in out
     assert "4 = 8 commits" in out
 
 
